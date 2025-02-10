@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* Solana's signature purple with a darker shade for better readability */
+    --background: #13111C;
+    --foreground: #FFFFFF;
+    --primary: #00FFA3;    /* Bright crypto green */
+    --secondary: #7C3AED;  /* Purple accent */
+    --accent: #FF6B00;     /* Warm orange for CTAs */
+    --text-muted: #94A3B8;
+    --surface: #1E1B2C;
+}
+
+.primary-color{
+    color: var(--primary);
+}
+
+.secondary-color{
+    color: var(--secondary);
+}
+
+.header-text{
+    color: var(--primary) !important;
+}
+
+.header-route-link {
+    border-color: var(--background);
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+/* Add this block for hover effect */
+.header-route-link:hover {
+    color: white; /* Adjust this to the desired color */
+    transition: color 0.3s ease;
+    cursor: pointer;
+    border-color: white;
+}
+
+.page-text{
+    color: white;
+}
+
+.landing-page-button {
+    background-color: var(--secondary);
+    color: white;
+}
+
+.landing-page-button:hover {
+    transform:scale(1.1);
+    transition: transform 0.3s ease;
+    color: var(--primary);
+}
+
+.landing-page-boarder {
+    border-color: white;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 10px;
+    /* padding: 5px; */
+}
+
+.place-card{
+    background-color: var(--secondary);
+    padding: 10px;
+}
+
+.place-card:hover{
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
