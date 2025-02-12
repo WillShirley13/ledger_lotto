@@ -1,8 +1,12 @@
+node_modules
+debug
+sbf-solana-solana
+deploy
 .anchor
 .DS_Store
-deploy
-**/*.rs.bk
-node_modules
-test-ledger
-.yarn
 .env
+.gitignore
+.yarn
+.anchor/
+test-ledger/
+release/
