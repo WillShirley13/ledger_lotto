@@ -41,7 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 # rust
-target/
+deploy/
+.anchor/
 test-ledger/
+
 # solana
 .solana/
