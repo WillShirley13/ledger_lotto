@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { IDL } from "@/target/types/solana_lottery";
-import type { SolanaLottery } from "@/target/types/solana_lottery";
+import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
+import idl from "../../../onchain/target/idl/solana_lottery.json";
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export async function GET() {
         const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
 
         // Initialize program
-        const program = new Program<SolanaLottery>(IDL as any, process.env.PROGRAM_ID!, provider);
+        const program = new Program<SolanaLottery>(idl as SolanaLottery, provider)
 
         // Get lottery vault PDA
         const [lotteryVaultPda] = PublicKey.findProgramAddressSync(
@@ -59,7 +59,6 @@ export async function GET() {
         const payoutTx = await program.methods
             .lotteryPayout()
             .accounts({
-                lotteryVault: lotteryVaultPda,
                 authority: authority.publicKey,
                 firstWinner: lotteryVault.latestLotoWinners.firstPlace,
                 secondWinner: lotteryVault.latestLotoWinners.secondPlace,
@@ -78,7 +77,7 @@ export async function GET() {
     } catch (error) {
         console.error("Error processing lottery payout:", error);
         return NextResponse.json(
-            { success: false, error: error.message },
+            { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         );
     }
