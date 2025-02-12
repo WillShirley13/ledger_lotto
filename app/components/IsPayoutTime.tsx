@@ -1,90 +1,90 @@
-"use client";
-import { useContext, useEffect, useState } from "react";
-import { ProgramProviderContext } from "./anchor/Providers";
-import { PublicKey, Keypair } from "@solana/web3.js";
-import { web3 } from "@coral-xyz/anchor";
-import { getKeypairFromEnvironment } from "@solana-developers/helpers";
-import bs58 from "bs58";
+// "use client";
+// import { useContext, useEffect, useState } from "react";
+// import { ProgramProviderContext } from "./anchor/Providers";
+// import { PublicKey, Keypair } from "@solana/web3.js";
+// import { web3 } from "@coral-xyz/anchor";
+// import { getKeypairFromEnvironment } from "@solana-developers/helpers";
 
-function IsPayoutTime() {
-	const context = useContext(ProgramProviderContext);
-	const program = context?.program;
-	const provider = context?.provider;
-	const [targetTimestamp, setTargetTimestamp] = useState(1739145600); // Initial timestamp
-    const authority = Keypair.fromSecretKey(new Uint8Array(JSON.parse(process.env.NEXT_PUBLIC_LOTTERY_KEYPAIR || "")));
 
-	useEffect(() => {
-		const checkTime = async () => {
-			try {
-				if (!program) return;
-				const currentTime = Math.floor(Date.now() / 1000);
-				if (currentTime < targetTimestamp) return;
+// function IsPayoutTime() {
+// 	const context = useContext(ProgramProviderContext);
+// 	const program = context?.program;
+// 	const provider = context?.provider;
+// 	const [targetTimestamp, setTargetTimestamp] = useState(1739145600); // Initial timestamp
+//     const authority = Keypair.fromSecretKey(new Uint8Array(JSON.parse(process.env.NEXT_PUBLIC_LOTTERY_KEYPAIR || "")));
 
-                console.log(`authority: ${authority.publicKey}`);
-				// Get lottery vault PDA
-				const [lotteryVaultPda] = PublicKey.findProgramAddressSync(
-					[Buffer.from("LotteryVault")],
-					program.programId
-				);
-                // console.log(`authority: ${authority.publicKey.toString()}`);
+// 	useEffect(() => {
+// 		const checkTime = async () => {
+// 			try {
+// 				if (!program) return;
+// 				const currentTime = Math.floor(Date.now() / 1000);
+// 				if (currentTime < targetTimestamp) return;
 
-				// Fetch lottery vault data
-				let lotteryVault = await program.account.lotteryVault.fetch(
-					lotteryVaultPda
-				);
+//                 console.log(`authority: ${authority.publicKey}`);
+// 				// Get lottery vault PDA
+// 				const [lotteryVaultPda] = PublicKey.findProgramAddressSync(
+// 					[Buffer.from("LotteryVault")],
+// 					program.programId
+// 				);
+//                 // console.log(`authority: ${authority.publicKey.toString()}`);
 
-				// Generate winning tickets (assuming 3 winners)
-				const winningTickets = Array.from({ length: 3 }, () => 
-					Math.floor(Math.random() * lotteryVault.totalTicketsSold.toNumber())
-				);
+// 				// Fetch lottery vault data
+// 				let lotteryVault = await program.account.lotteryVault.fetch(
+// 					lotteryVaultPda
+// 				);
 
-				// Select winners
-				const selectWinnersTx = await program.methods
-					.selectWinners(winningTickets)
-					.accounts({
-						authority: authority.publicKey,
-					})
-					.rpc();
+// 				// Generate winning tickets (assuming 3 winners)
+// 				const winningTickets = Array.from({ length: 3 }, () => 
+// 					Math.floor(Math.random() * lotteryVault.totalTicketsSold.toNumber())
+// 				);
 
-				await provider?.connection.confirmTransaction(selectWinnersTx);
+// 				// Select winners
+// 				const selectWinnersTx = await program.methods
+// 					.selectWinners(winningTickets)
+// 					.accounts({
+// 						authority: authority.publicKey,
+// 					})
+// 					.rpc();
 
-                // Fetch lottery vault data
-				lotteryVault = await program.account.lotteryVault.fetch(
-					lotteryVaultPda
-				);
+// 				await provider?.connection.confirmTransaction(selectWinnersTx);
 
-				// Process payout
-				const payoutTx = await program.methods
-					.lotteryPayout()
-					.accounts({
-						authority: authority.publicKey,
-						firstWinner: lotteryVault.latestLotoWinners.firstPlace,
-						secondWinner: lotteryVault.latestLotoWinners.secondPlace,
-						thirdWinner: lotteryVault.latestLotoWinners.thirdPlace,
-					})
-					.rpc();
+//                 // Fetch lottery vault data
+// 				lotteryVault = await program.account.lotteryVault.fetch(
+// 					lotteryVaultPda
+// 				);
 
-				await provider?.connection.confirmTransaction(payoutTx);
+// 				// Process payout
+// 				const payoutTx = await program.methods
+// 					.lotteryPayout()
+// 					.accounts({
+// 						authority: authority.publicKey,
+// 						firstWinner: lotteryVault.latestLotoWinners.firstPlace,
+// 						secondWinner: lotteryVault.latestLotoWinners.secondPlace,
+// 						thirdWinner: lotteryVault.latestLotoWinners.thirdPlace,
+// 					})
+// 					.rpc();
 
-				// Update the target timestamp for the next check
-				setTargetTimestamp(lotteryVault.finishTime);
-				console.log("Lottery payout completed! Next target:", lotteryVault.finishTime);
-			} catch (error) {
-				console.error("Error processing lottery payout:", error);
-			}
-		};
+// 				await provider?.connection.confirmTransaction(payoutTx);
 
-		// Check every 5 seconds
-		const interval = setInterval(checkTime, 5000);
+// 				// Update the target timestamp for the next check
+// 				setTargetTimestamp(lotteryVault.finishTime);
+// 				console.log("Lottery payout completed! Next target:", lotteryVault.finishTime);
+// 			} catch (error) {
+// 				console.error("Error processing lottery payout:", error);
+// 			}
+// 		};
 
-		// Initial check
-		checkTime();
+// 		// Check every 5 seconds
+// 		const interval = setInterval(checkTime, 5000);
 
-		// Cleanup
-		return () => clearInterval(interval);
-	}, [program, provider, targetTimestamp]); // Add dependencies
+// 		// Initial check
+// 		checkTime();
 
-	return null;
-}
+// 		// Cleanup
+// 		return () => clearInterval(interval);
+// 	}, [program, provider, targetTimestamp]); // Add dependencies
 
-export default IsPayoutTime;
+// 	return null;
+// }
+
+// export default IsPayoutTime;
