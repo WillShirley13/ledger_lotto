@@ -187,6 +187,7 @@ describe("solana-lottery", () => {
         const selectWinnersTx = await program.methods.selectWinners(winningTickets).accounts({
             authority: provider.wallet.publicKey,
         }).rpc();
+        console.log(`selectWinnersTx: ${selectWinnersTx}`);
 
         await provider.connection.confirmTransaction(selectWinnersTx);
         lotteryVault = await program.account.lotteryVault.fetch(

@@ -7,7 +7,7 @@ mod errors;
 mod instructions;
 mod state;
 
-declare_id!("vurfHgSuomn9PEPK7a4eRjw288n8GaeSwub3pCweKfq");
+declare_id!("13pVhitZSHBdBGKUd36SP36mBomoDtwr1YKxqJA8ovG1");
 
 #[program]
 pub mod solana_lottery {
