@@ -11,7 +11,7 @@ const doto = Doto({
 	variable: '--font-doto',
 });
 
-export const ConnectButton: FC = (props: {className?: string}) => {
+export const ConnectButton: FC = () => {
 	const { wallet, connect, disconnect, connected } = useWallet();
 	const { setVisible } = useWalletModal();
 	const [mounted, setMounted] = useState(false);

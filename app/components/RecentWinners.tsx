@@ -44,7 +44,7 @@ const RecentWinners = () => {
         }
 
         fetchWinners()
-    }, [])
+    }, [program])
     return (
         <div className='md:flex md:flex-row flex-col items-top justify-center mt-6 px-20'>
             <div className='landing-page-boarder flex-1 md:w-1/2 p-5 mt-5 md:mr-10'>

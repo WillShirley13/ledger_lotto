@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey} from "@solana/web3.js";
 import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
 import idl from "../../../onchain/target/idl/solana_lottery.json";
 
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        if (!process.env.LOTTERY_KEYPAIR) {
+        if (!process.env.LOTTERY_AUTHORITY_KEYPAIR) {
             throw new Error('LOTTERY_KEYPAIR environment variable is required');
         }
         if (!process.env.SOLANA_RPC_URL) {
@@ -19,7 +19,7 @@ export async function GET() {
         // Configure connection
         const connection = new Connection(process.env.SOLANA_RPC_URL);
         const authority = Keypair.fromSecretKey(
-            new Uint8Array(JSON.parse(process.env.LOTTERY_KEYPAIR))
+            new Uint8Array(JSON.parse(process.env.LOTTERY_AUTHORITY_KEYPAIR))
         );
         const wallet = new Wallet(authority);
         const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });

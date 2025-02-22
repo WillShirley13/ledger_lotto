@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import { PublicKey } from "@solana/web3.js";
-import { BN } from "@coral-xyz/anchor";
 import { ProgramProviderContext } from "../components/anchor/Providers";
 import BuyTickets from "../components/BuyTickets";
 import UserTickets from "../components/UserTickets";
