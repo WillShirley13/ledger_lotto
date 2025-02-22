@@ -10,4 +10,6 @@ deploy
 .anchor/
 test-ledger/
 release/
-post_deployment_admin
+post_deployment_admin/
+tests/
+
