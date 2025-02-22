@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
+import { Program, AnchorProvider, Wallet, web3 } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey} from "@solana/web3.js";
 import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
 import idl from "../../../onchain/target/idl/solana_lottery.json";
@@ -55,6 +55,7 @@ export async function GET() {
         // Fetch updated lottery vault data
         lotteryVault = await program.account.lotteryVault.fetch(lotteryVaultPda);
 
+        const protocolTreasury = new web3.PublicKey("ADPYX1FrWLgKwVQ1k2TndirR9nFJGRJWMifT8eoCxU9D");
         // Process payout
         const payoutTx = await program.methods
             .lotteryPayout()
@@ -63,8 +64,8 @@ export async function GET() {
                 firstWinner: lotteryVault.latestLotoWinners.firstPlace,
                 secondWinner: lotteryVault.latestLotoWinners.secondPlace,
                 thirdWinner: lotteryVault.latestLotoWinners.thirdPlace,
+                protocolTreasury: protocolTreasury,
             })
-            .signers([authority])
             .rpc();
 
         await connection.confirmTransaction(payoutTx);
