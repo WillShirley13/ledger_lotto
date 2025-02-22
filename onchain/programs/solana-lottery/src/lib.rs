@@ -7,18 +7,14 @@ mod errors;
 mod instructions;
 mod state;
 
-declare_id!("13pVhitZSHBdBGKUd36SP36mBomoDtwr1YKxqJA8ovG1");
+declare_id!("B9GiRPwYjU5QkYyAY8wVNcdGE2wLSZ9RUgvskuYiF79t");
 
 #[program]
 pub mod solana_lottery {
     use super::*;
 
-    pub fn init_lottery_vault(ctx: Context<InitLotteryVault>) -> Result<()> {
-        process_init_lottery_vault(ctx)
-    }
-
-    pub fn init_protocol_treasury(ctx: Context<InitProtocolTreasury>) -> Result<()> {
-        process_init_protocol_treasury(ctx)
+    pub fn init_lottery_vault(ctx: Context<InitLotteryVault>, start_time: u32) -> Result<()> {
+        process_init_lottery_vault(ctx, start_time)
     }
 
     pub fn lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {

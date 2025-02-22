@@ -5,8 +5,6 @@ pub const AUTHORITY_PUBKEY: Pubkey = pubkey!("HSePyKSEBLs6F4F4G1z6P9nnqQpj6jBN6S
 
 #[constant]
 pub const LOTTERY_VAULT_SEED: &[u8] = "LotteryVault".as_bytes();
-#[constant]
-pub const PROTOCOL_TREASURY_SEED: &[u8] = "ProtocolTreasury".as_bytes();
 
 #[constant]
 pub const SECONDS_IN_A_WEEK: u32 = 604800;

@@ -11,14 +11,14 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { AnchorProvider, setProvider, Program} from "@coral-xyz/anchor";
 import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
 import idl from "../../../onchain/target/idl/solana_lottery.json";
-
+import { clusterApiUrl } from "@solana/web3.js";
 export const ProgramProviderContext = createContext<{
     provider: AnchorProvider | null;
     program: Program<SolanaLottery> | null;
 } | null>(null);
 
 export function Providers({ children }: { children: React.ReactNode }) {
-	const endpoint = "http://127.0.0.1:8899";
+	const endpoint = clusterApiUrl("devnet");
 	const wallets = useMemo(() => [], []);
 
 	return (

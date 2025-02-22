@@ -20,4 +20,6 @@ pub enum ErrorCode {
     NumericOverflow,
     #[msg("Prize pool does not match the sum of rewards and protocol revenue")]
     PrizePoolMismatch,
+    #[msg("Invalid protocol treasury")]
+    InvalidProtocolTreasury,
 }

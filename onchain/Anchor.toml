@@ -5,14 +5,17 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-solana_lottery = "13pVhitZSHBdBGKUd36SP36mBomoDtwr1YKxqJA8ovG1"
+solana_lottery = "B9GiRPwYjU5QkYyAY8wVNcdGE2wLSZ9RUgvskuYiF79t"
+
+[programs.devnet]
+solana_lottery = "B9GiRPwYjU5QkYyAY8wVNcdGE2wLSZ9RUgvskuYiF79t"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
-wallet = "./target/deploy/lottery-keypair.json"
+cluster = "devnet"
+wallet = "./target/deploy/solana_lottery-devnet-keypair.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

@@ -6,6 +6,8 @@ use anchor_lang::prelude::*;
 pub struct LotteryVault {
     // The authority of the lottery vault.
     pub authority: Pubkey,
+    // The protocol treasury.
+    pub protocol_treasury: Pubkey,
     // The total amount of lamports in the prize pool.
     pub prize_pool: u64,
     // A vector to store information about all participants, limited to a maximum of 100.

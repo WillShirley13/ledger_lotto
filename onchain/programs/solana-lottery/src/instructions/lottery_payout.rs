@@ -1,7 +1,6 @@
 use crate::constants::{
     BASIS_POINTS, FIRST_PLACE_REWARD_BP, LOTTERY_VAULT_MIN_BALANCE, LOTTERY_VAULT_SEED,
-    PROTOCOL_REVENUE_SHARE_BP, PROTOCOL_TREASURY_SEED, SECONDS_IN_A_WEEK, SECOND_PLACE_REWARD_BP,
-    THIRD_PLACE_REWARD_BP,
+    PROTOCOL_REVENUE_SHARE_BP, SECONDS_IN_A_WEEK, SECOND_PLACE_REWARD_BP, THIRD_PLACE_REWARD_BP,
 };
 use crate::custom_types::{LotteryStatus, PlayerInfo, RecentWinners};
 use crate::errors::ErrorCode;
@@ -25,30 +24,19 @@ pub fn process_select_winners(ctx: Context<SelectWinners>, winning_numbers: [u8;
     let lottery_vault: &mut Account<'_, LotteryVault> = &mut ctx.accounts.lottery_vault;
     let participants: &Vec<PlayerInfo> = &lottery_vault.participants;
 
-    let [first_winning_number, second_winning_number, third_winning_number] = winning_numbers;
-    let mut first_pubkey: Option<Pubkey> = None;
-    let mut second_pubkey: Option<Pubkey> = None;
-    let mut third_pubkey: Option<Pubkey> = None;
+    let winners: [Option<Pubkey>; 3] = winning_numbers.map(|num| {
+        participants
+            .iter()
+            .find(|p| p.ticket_numbers.contains(&num))
+            .map(|p| p.pubkey)
+    });
 
-    for participant in participants {
-        if participant.ticket_numbers.contains(&first_winning_number) {
-            first_pubkey = Some(participant.pubkey);
-        }
-        if participant.ticket_numbers.contains(&second_winning_number) {
-            second_pubkey = Some(participant.pubkey);
-        }
-        if participant.ticket_numbers.contains(&third_winning_number) {
-            third_pubkey = Some(participant.pubkey);
-        }
-    }
-
-    //NOTE: IF NO WINNER IS FOUND FOR A PARTICULAR PLACE, THE LEFT OVER WINNINGS WILL BE ROLLED OVER TO THE NEXT LOTTERY
     lottery_vault.latest_loto_winners = RecentWinners {
-        first_place: first_pubkey,
+        first_place: winners[0],
         first_place_amount: None,
-        second_place: second_pubkey,
+        second_place: winners[1],
         second_place_amount: None,
-        third_place: third_pubkey,
+        third_place: winners[2],
         third_place_amount: None,
     };
     lottery_vault.status = LotteryStatus::Finished;
@@ -62,18 +50,16 @@ pub struct LotteryPayout<'info> {
         mut,
         seeds = [LOTTERY_VAULT_SEED],
         bump = lottery_vault.bump,
-        constraint = lottery_vault.status == LotteryStatus::Finished @ErrorCode::LotteryNotFinished
+        constraint = lottery_vault.status == LotteryStatus::Finished @ErrorCode::LotteryNotFinished,
+        constraint = lottery_vault.authority == authority.key() @ErrorCode::UnauthorisedSigner
     )]
     pub lottery_vault: Account<'info, LotteryVault>,
-    #[account(mut, constraint = protocol_treasury.authority == authority.key() @ErrorCode::UnauthorisedSigner)]
+
+    #[account(mut)]
     pub authority: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [PROTOCOL_TREASURY_SEED],
-        bump = protocol_treasury.bump,
-        has_one = authority @ErrorCode::UnauthorisedSigner
-    )]
-    pub protocol_treasury: Account<'info, ProtocolTreasury>,
+
+    #[account(mut, constraint = protocol_treasury.key() == lottery_vault.protocol_treasury.key() @ErrorCode::InvalidProtocolTreasury)]
+    pub protocol_treasury: SystemAccount<'info>,
 
     #[account(mut, constraint = lottery_vault.latest_loto_winners.first_place.is_none() || first_winner.key() == lottery_vault.latest_loto_winners.first_place.unwrap() @ErrorCode::InvalidWinner)]
     pub first_winner: Option<SystemAccount<'info>>,
@@ -88,8 +74,8 @@ pub struct LotteryPayout<'info> {
 }
 
 pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
-    let lottery_vault: &mut Account<'_, LotteryVault> = &mut ctx.accounts.lottery_vault;
-    let protocol_treasury: &mut Account<'_, ProtocolTreasury> = &mut ctx.accounts.protocol_treasury;
+    let lottery_vault: &mut Account<LotteryVault> = &mut ctx.accounts.lottery_vault;
+    let protocol_treasury: &mut SystemAccount = &mut ctx.accounts.protocol_treasury;
     let first_winner: &mut Option<SystemAccount> = &mut ctx.accounts.first_winner;
     let second_winner: &mut Option<SystemAccount> = &mut ctx.accounts.second_winner;
     let third_winner: &mut Option<SystemAccount> = &mut ctx.accounts.third_winner;
@@ -104,8 +90,8 @@ pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
 
     // Ensure prize pool matches the sum of rewards and protocol revenue
     require!(
-        first_place_reward + second_place_reward + third_place_reward + protocol_treasury_revenue
-            <= lottery_vault.get_lamports() - LOTTERY_VAULT_MIN_BALANCE,
+        (first_place_reward + second_place_reward + third_place_reward + protocol_treasury_revenue)
+            <= (lottery_vault.get_lamports() - LOTTERY_VAULT_MIN_BALANCE),
         ErrorCode::PrizePoolMismatch
     );
 
@@ -154,12 +140,6 @@ pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
         &protocol_treasury.to_account_info(),
         protocol_treasury_revenue,
     )?;
-
-    // Update protocol treasury revenue
-    protocol_treasury.revenue = protocol_treasury
-        .revenue
-        .checked_add(protocol_treasury_revenue)
-        .ok_or(ErrorCode::NumericOverflow)?;
 
     // Update prize pool
     lottery_vault.prize_pool -= protocol_treasury_revenue;

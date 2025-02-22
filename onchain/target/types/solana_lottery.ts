@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/solana_lottery.json`.
  */
 export type SolanaLottery = {
-  "address": "13pVhitZSHBdBGKUd36SP36mBomoDtwr1YKxqJA8ovG1",
+  "address": "B9GiRPwYjU5QkYyAY8wVNcdGE2wLSZ9RUgvskuYiF79t",
   "metadata": {
     "name": "solanaLottery",
     "version": "0.1.0",
@@ -57,65 +57,19 @@ export type SolanaLottery = {
           }
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "initProtocolTreasury",
-      "discriminator": [
-        122,
-        176,
-        5,
-        25,
-        145,
-        164,
-        189,
-        196
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "protocolTreasury",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  80,
-                  114,
-                  111,
-                  116,
-                  111,
-                  99,
-                  111,
-                  108,
-                  84,
-                  114,
-                  101,
-                  97,
-                  115,
-                  117,
-                  114,
-                  121
-                ]
-              }
-            ]
-          }
+          "name": "protocolTreasury"
         },
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "startTime",
+          "type": "u32"
+        }
+      ]
     },
     {
       "name": "lotteryPayout",
@@ -158,39 +112,11 @@ export type SolanaLottery = {
         {
           "name": "authority",
           "writable": true,
-          "signer": true,
-          "relations": [
-            "protocolTreasury"
-          ]
+          "signer": true
         },
         {
           "name": "protocolTreasury",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  80,
-                  114,
-                  111,
-                  116,
-                  111,
-                  99,
-                  111,
-                  108,
-                  84,
-                  114,
-                  101,
-                  97,
-                  115,
-                  117,
-                  114,
-                  121
-                ]
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "firstWinner",
@@ -392,19 +318,6 @@ export type SolanaLottery = {
         53,
         85
       ]
-    },
-    {
-      "name": "protocolTreasury",
-      "discriminator": [
-        162,
-        26,
-        123,
-        61,
-        102,
-        146,
-        47,
-        73
-      ]
     }
   ],
   "errors": [
@@ -452,6 +365,11 @@ export type SolanaLottery = {
       "code": 6008,
       "name": "prizePoolMismatch",
       "msg": "Prize pool does not match the sum of rewards and protocol revenue"
+    },
+    {
+      "code": 6009,
+      "name": "invalidProtocolTreasury",
+      "msg": "Invalid protocol treasury"
     }
   ],
   "types": [
@@ -479,6 +397,10 @@ export type SolanaLottery = {
         "fields": [
           {
             "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "protocolTreasury",
             "type": "pubkey"
           },
           {
@@ -554,30 +476,6 @@ export type SolanaLottery = {
           {
             "name": "ticketNumbers",
             "type": "bytes"
-          }
-        ]
-      }
-    },
-    {
-      "name": "protocolTreasury",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "authority",
-            "type": "pubkey"
-          },
-          {
-            "name": "revenue",
-            "type": "u64"
-          },
-          {
-            "name": "exists",
-            "type": "bool"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
           }
         ]
       }
@@ -667,11 +565,6 @@ export type SolanaLottery = {
       "name": "protocolRevenueShareBp",
       "type": "u64",
       "value": "500"
-    },
-    {
-      "name": "protocolTreasurySeed",
-      "type": "bytes",
-      "value": "[80, 114, 111, 116, 111, 99, 111, 108, 84, 114, 101, 97, 115, 117, 114, 121]"
     },
     {
       "name": "secondsInAWeek",

@@ -8,13 +8,10 @@ use anchor_lang::solana_program::system_instruction::transfer;
 
 #[derive(Accounts)]
 pub struct PurchaseTicket<'info> {
-    // #[account(mut)]
-    // pub authority: Signer<'info>,
     #[account(mut)]
     pub player: Signer<'info>,
     #[account(
         mut,
-        // has_one = authority @ ErrorCode::UnauthorisedSigner,
         seeds = [LOTTERY_VAULT_SEED],
         bump = lottery_vault.bump,
     )]
@@ -30,10 +27,6 @@ pub fn process_purchase_ticket(
     // let authority: &mut Signer<'_> = &mut ctx.accounts.authority;
     let player: &mut Signer<'_> = &mut ctx.accounts.player;
     let system_program: &Program<'_, System> = &ctx.accounts.system_program;
-
-    // if lottery_vault.participants.len() + 10 == lottery_vault.max_participants as usize {
-    //     allocate_space_for_new_players(lottery_vault, authority, system_program)?;
-    // }
 
     // Ensure player has enough funds to cover rent and purchase tickets
     let total_cost: u64 = quantity_of_tickets * LAMPORTS_PER_LOTTERY_TICKET;
@@ -114,40 +107,3 @@ pub fn process_purchase_ticket(
 
     Ok(())
 }
-
-// fn allocate_space_for_new_players<'a>(
-//     lottery_vault: &mut Account<'a, LotteryVault>,
-//     authority: &mut Signer<'a>,
-//     system_program: &Program<'a, System>,
-// ) -> Result<()> {
-//     let individual_player_space = PlayerInfo::INIT_SPACE;
-//     let current_vault_space = lottery_vault.to_account_info().data_len();
-
-//     let minimum_balance_with_new_players =
-//         Rent::get()?.minimum_balance(current_vault_space + (individual_player_space * 100));
-//     let current_minimum_balance = Rent::get()?.minimum_balance(current_vault_space);
-
-//     // Ensure Vault has sufficient funds to cover rent
-//     let transfer_instruction = transfer(
-//         &authority.key(),
-//         &lottery_vault.key(),
-//         minimum_balance_with_new_players - current_minimum_balance,
-//     );
-//     invoke(
-//         &transfer_instruction,
-//         &[
-//             authority.to_account_info(),
-//             lottery_vault.to_account_info(),
-//             system_program.to_account_info(),
-//         ],
-//     )?;
-
-//     lottery_vault
-//         .to_account_info()
-//         .realloc(current_vault_space + (individual_player_space * 100), false)?;
-//     lottery_vault.max_participants = lottery_vault
-//         .max_participants
-//         .checked_add(100)
-//         .ok_or(ErrorCode::NumericOverflow)?;
-//     Ok(())
-// }

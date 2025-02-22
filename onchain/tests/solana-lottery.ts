@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SolanaLottery } from "../target/types/solana_lottery";
-import web3, { Keypair, TransactionError} from "@solana/web3.js";
+import web3, { Keypair, LAMPORTS_PER_SOL, TransactionError} from "@solana/web3.js";
 import { expect, assert } from "chai";
 import { publicKey } from "@coral-xyz/anchor/dist/cjs/utils";
 
@@ -10,39 +10,57 @@ describe("solana-lottery", () => {
 	// Configure the client to use the local cluster.
 	const provider = anchor.AnchorProvider.env();
 	anchor.setProvider(provider);
-
 	const program = anchor.workspace.SolanaLottery as Program<SolanaLottery>;
 
-    const LOTTERY_VAULT_SEED = Buffer.from("LotteryVault");
-    const PROTOCOL_TREASURY_SEED = Buffer.from("ProtocolTreasury");
 
+    const LOTTERY_VAULT_SEED = Buffer.from("LotteryVault");
     const [lotteryVaultPda] = web3.PublicKey.findProgramAddressSync(
         [LOTTERY_VAULT_SEED],
         program.programId
     );
-    const [protocolTreasuryPda] = web3.PublicKey.findProgramAddressSync(
-        [PROTOCOL_TREASURY_SEED],
-        program.programId
-    );
+    const protocolTreasury = new web3.PublicKey("ADPYX1FrWLgKwVQ1k2TndirR9nFJGRJWMifT8eoCxU9D");
+    console.log(`provider publicKey: ${provider.wallet.publicKey}`);
 
-    const LAMPORTS_PER_SOL = web3.LAMPORTS_PER_SOL;
-    console.log(`provider.wallet.publicKey: ${provider.wallet.publicKey}`);
+    async function initPayout(winningTickets: number[]) {
+        // call selectWinners instruction
+        let selectWinnersTx = await program.methods.selectWinners(winningTickets).accounts({
+            authority: provider.wallet.publicKey,
+        }).rpc();
+        await provider.connection.confirmTransaction(selectWinnersTx);
+
+        const lotteryVault = await program.account.lotteryVault.fetch(
+            lotteryVaultPda
+        );
+
+        const winningPlayers = lotteryVault.latestLotoWinners;
+        console.log(`winningPlayers: ${JSON.stringify(winningPlayers, null, 2)}\n`);
+
+        let payoutTx = await program.methods.lotteryPayout().accounts({
+            authority: provider.wallet.publicKey,
+            protocolTreasury: protocolTreasury,
+            firstWinner: winningPlayers.firstPlace,
+            secondWinner: winningPlayers.secondPlace,
+            thirdWinner: winningPlayers.thirdPlace,
+        }).rpc();
+        await provider.connection.confirmTransaction(payoutTx);
+
+        console.log(`LOTTERY PAYOUT SUCCESSFUL (${payoutTx})`);
+    }
 
     before(async () => {
         const lotteryVaultTx = await program.methods
-			.initLotteryVault()
+			.initLotteryVault(17391456)
 			.accounts({
 				authority: provider.wallet.publicKey,
+                protocolTreasury: protocolTreasury,
 			})
 			.signers([]) // Add this if there are no additional signers
 			.rpc();
-
-        let lotteryVault = await program.account.lotteryVault.fetch(
-            lotteryVaultPda
-        );
+        console.log("Lottery vault init tx: ", lotteryVaultTx);
+        
         console.log(`lotteryVault initial size: ${(await program.account.lotteryVault.getAccountInfo(lotteryVaultPda)).data.byteLength}\n`);
         for (let i = 0; i < 5; i++) {
-            const reallocTx = await program.methods
+            await program.methods
                 .reallocLotteryVault()
                 .accounts({
                     authority: provider.wallet.publicKey,
@@ -51,19 +69,12 @@ describe("solana-lottery", () => {
         }
         console.log(`lotteryVault size after realloc: ${(await program.account.lotteryVault.getAccountInfo(lotteryVaultPda)).data.byteLength}\n`);
 
-        const protocolTreasuryTx = await program.methods
-			.initProtocolTreasury()
-			.accounts({
-				authority: provider.wallet.publicKey,
-			})
-			.signers([]) // Add this if there are no additional signers
-			.rpc();
         
         const airdropSignature = await provider.connection.requestAirdrop(lotteryVaultPda, LAMPORTS_PER_SOL * 1);
         await provider.connection.confirmTransaction(airdropSignature);
     });
 
-	it("Initializes the lottery vault", async () => {
+	it("Check the lottery vault after init", async () => {
         const lotteryVault = await program.account.lotteryVault.fetch(
             lotteryVaultPda
         );
@@ -86,14 +97,6 @@ describe("solana-lottery", () => {
         expect(lotteryVault.exists, "Lottery vault should exist").to.be.true;
 	});
 
-    it("Initializes the protocol treasury", async () => {
-        const protocolTreasury = await program.account.protocolTreasury.fetch(protocolTreasuryPda);
-        console.log(`protocolTreasury: ${JSON.stringify(protocolTreasury, null, 2)}\n`);
-
-        expect(protocolTreasury.authority.toString()).to.equal(provider.wallet.publicKey.toString());
-        expect(protocolTreasury.revenue.toNumber(), "Revenue should be 0").to.equal(0);
-        expect(protocolTreasury.exists, "Protocol treasury should exist").to.be.true;
-    });
 
     it("Purchase 10 tickets", async () => {
         const user = Keypair.generate();
@@ -106,7 +109,7 @@ describe("solana-lottery", () => {
         console.log(`userBalance: ${userBalance}`);
         const numTickets = new anchor.BN(10);
 
-        const tx = await program.methods.purchaseTicket(numTickets).accounts({
+        const purchaseTx = await program.methods.purchaseTicket(numTickets).accounts({
             player: user.publicKey,
         }).signers([user]).rpc();
 
@@ -118,6 +121,9 @@ describe("solana-lottery", () => {
         expect(lotteryVault.prizePool.toNumber(), "Prize pool should be 10000000").to.equal((LAMPORTS_PER_SOL * 0.01) * numTickets.toNumber());
         expect(lotteryVault.totalTicketsSold.toNumber(), "Total tickets sold should be 10").to.equal(numTickets.toNumber());
         expect(lotteryVault.nextTicketId, "Next ticket id should be 2").to.equal(11);
+
+        await provider.connection.confirmTransaction(purchaseTx);
+        await initPayout([1, 2, 3]);
     });
 
     it("Purchase too many tickets", async () => {
@@ -143,34 +149,31 @@ describe("solana-lottery", () => {
             }).signers([user]).rpc();
             assert.fail("Expected an error but transaction succeeded");
         } catch (error) {
+            await initPayout([1,2,3]);
             console.log(`error: ${error}`);
             expect(error).to.be.an('error');
-            // You can also check for specific error message if needed
-            // expect(error.message).to.include('Your specific error message');
         }
     });
 
-    it("Account size reallocation at 190 players", async () => {
-        for (let i = 0; i < 30; i++) {
+    it("10 players, purchase 6 ticket each", async () => {
+        for (let i = 0; i < 10; i++) {
             const user = Keypair.generate();
             const airdropSignature = await provider.connection.requestAirdrop(user.publicKey, LAMPORTS_PER_SOL * 1);
             // Wait for airdrop confirmation
             await provider.connection.confirmTransaction(airdropSignature);
-            const tx = await program.methods.purchaseTicket(new anchor.BN(1)).accounts({
+            const tx = await program.methods.purchaseTicket(new anchor.BN(6)).accounts({
                 player: user.publicKey,
             }).signers([user]).rpc();
             await provider.connection.confirmTransaction(tx);
-            if ([1, 10, 29].includes(i)) {
-                const lotteryVaultAccInfo = await provider.connection.getAccountInfo(lotteryVaultPda);
-                console.log(`lottery Vault Acc Size(@${i} players): ${lotteryVaultAccInfo?.data.length}`);
-            }
         }
         const lotteryVault = await program.account.lotteryVault.fetch(
             lotteryVaultPda
         );
-        // expect(lotteryVault.participants.length, "Participants should be 200").to.equal(202);
-        // expect(lotteryVault.totalTicketsSold.toNumber(), "Total tickets sold should be 200").to.equal(220);
-        // expect(lotteryVault.nextTicketId, "Next ticket id should be 201").to.equal(221);
+        expect(lotteryVault.participants.length, "Participants should be 10").to.equal(10);
+        expect(lotteryVault.totalTicketsSold.toNumber(), "Total tickets sold should be 60").to.equal(60);
+        expect(lotteryVault.nextTicketId, "Next ticket id should be 61").to.equal(61);
+
+        await initPayout([10, 44, 49]);
     });
 
     it("Lottery payout", async () => {
@@ -187,42 +190,47 @@ describe("solana-lottery", () => {
         const selectWinnersTx = await program.methods.selectWinners(winningTickets).accounts({
             authority: provider.wallet.publicKey,
         }).rpc();
+        await provider.connection.confirmTransaction(selectWinnersTx);
         console.log(`selectWinnersTx: ${selectWinnersTx}`);
 
         await provider.connection.confirmTransaction(selectWinnersTx);
         lotteryVault = await program.account.lotteryVault.fetch(
             lotteryVaultPda
         );
-        let winningPlayers = lotteryVault.latestLotoWinners;
+        const winningPlayers = lotteryVault.latestLotoWinners;
 
         const players = [winningPlayers.firstPlace, winningPlayers.secondPlace, winningPlayers.thirdPlace];
         for (const player of players) {
-            const balance = await provider.connection.getBalance(player);
-            console.log(`Player ${player.toString()} balance (before payout): ${balance / LAMPORTS_PER_SOL} SOL`);
+            if (player) {
+                const balance = await provider.connection.getBalance(player);
+                console.log(`Player ${player.toString()} balance (before payout): ${balance / LAMPORTS_PER_SOL} SOL`);
+            }
         }
         
-        let protocolTreasuryBalance = await provider.connection.getBalance(protocolTreasuryPda);
-        console.log(`protocolTreasury before payout: ${protocolTreasuryBalance / LAMPORTS_PER_SOL} SOL\n`);
-
+        // Check protocol treasury balance before payout
+        console.log(`protocolTreasury before payout: ${await provider.connection.getBalance(protocolTreasury) / LAMPORTS_PER_SOL} SOL\n`);
+        // Check lottery vault balance before payout
         console.log(`lotteryVault before payout: ${await provider.connection.getBalance(lotteryVaultPda) / LAMPORTS_PER_SOL} SOL\n`);
 
         const payoutTx = await program.methods.lotteryPayout().accounts({
             authority: provider.wallet.publicKey,
+            protocolTreasury: protocolTreasury,
             firstWinner: winningPlayers.firstPlace,
             secondWinner: winningPlayers.secondPlace,
             thirdWinner: winningPlayers.thirdPlace,
-            systemProgram: web3.SystemProgram.programId,
         }).rpc();
         await provider.connection.confirmTransaction(payoutTx);
 
         console.log()
         for (const player of players) {
-            const balance = await provider.connection.getBalance(player);
-            console.log(`Player ${player.toString()} balance (after payout): ${balance / LAMPORTS_PER_SOL} SOL`);
+            if (player) {
+                const balance = await provider.connection.getBalance(player);
+                console.log(`Player ${player.toString()} balance (after payout): ${balance / LAMPORTS_PER_SOL} SOL`);
+            }
         }
 
-        protocolTreasuryBalance = await provider.connection.getBalance(protocolTreasuryPda);
-        console.log(`protocolTreasury: ${protocolTreasuryBalance / LAMPORTS_PER_SOL} SOL\n`);
+        // Check protocol treasury balance after payout
+        console.log(`protocolTreasury: ${await provider.connection.getBalance(protocolTreasury) / LAMPORTS_PER_SOL} SOL\n`);
 
         lotteryVault = await program.account.lotteryVault.fetch(
             lotteryVaultPda
