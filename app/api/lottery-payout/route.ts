@@ -58,6 +58,7 @@ export async function GET() {
 
         // Fetch lottery vault data
         let lotteryVault = await program.account.lotteryVault.fetch(lotteryVaultPda);
+        console.log("Lottery vault data:", lotteryVault.finishTime);
 
         // Generate winning tickets
         const winningTickets = Array.from({ length: 3 }, () =>
