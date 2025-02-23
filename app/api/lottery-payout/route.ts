@@ -1,17 +1,14 @@
-export const runtime = 'nodejs';
+// export const runtime = 'nodejs';
 
-import * as anchor from "@coral-xyz/anchor";
 import { NextResponse } from "next/server";
-import { Connection, Keypair, PublicKey} from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
 import idl from "../../../onchain/target/idl/solana_lottery.json";
+import * as anchor from "@coral-xyz/anchor";
 
 export async function GET() {
     console.log("Cron job started: Processing lottery payout...");
     try {
-        console.log("Anchor object:", Object.keys(anchor));
-        console.log("Wallet class:", anchor.Wallet);
-        
         if (!process.env.LOTTERY_AUTHORITY_KEYPAIR) {
             throw new Error('LOTTERY_KEYPAIR environment variable is required');
         }
