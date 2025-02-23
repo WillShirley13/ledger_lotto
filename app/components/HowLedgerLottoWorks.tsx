@@ -2,7 +2,7 @@ import React from "react";
 
 const HowLedgerLottoWorks = () => {
 	return (
-        <div className='landing-page-boarder flex-1 md:w-1/2 p-5 mt-5 md:ml-10'>
+        <div className='landing-page-boarder flex-1 md:w-1/2 p-5 mt-5 mb-5 md:ml-10'>
             <h2 className='primary-color text-center text-3xl mb-6'>How does LedgerLotto work?</h2>
             <div className='space-y-4'>
                 <p className='text-lg mx-2 leading-relaxed'>

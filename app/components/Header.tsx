@@ -20,7 +20,7 @@ const header = () => {
 		<div>
 			<div className="@container mx-auto flex flex-col md:flex-row items-center p-4 md:p-6">
 				<Link href="/" className="mb-4 md:mb-0 ">
-					<h1 className={`${doto.className} sm:text-4xl md:text-5xl lg:text-6xl font-extrabold header-text`}>
+					<h1 className={`${doto.className} text-4xl md:text-5xl lg:text-6xl font-extrabold header-text`}>
 						LedgerLotto
 					</h1>
 				</Link>

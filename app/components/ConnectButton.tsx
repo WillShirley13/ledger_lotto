@@ -33,7 +33,7 @@ export const ConnectButton: FC = () => {
 	if (!mounted) {
 		return (
 			<button
-				className={`${doto.className} sm:mt-2 sm:text-xl lg:text-2xl font-bold header-text header-route-link md:ml-auto`}
+				className={`${doto.className} xs:mt-2 md:mt-0 sm:text-xl lg:text-2xl font-bold header-text header-route-link md:ml-auto`}
 			>
 				Connect
 			</button>
@@ -43,7 +43,7 @@ export const ConnectButton: FC = () => {
 	return (
 		<button
 			onClick={handleClick}
-			className={`${doto.className} sm:mt-2 sm:text-xl lg:text-2xl font-bold header-text header-route-link md:ml-auto`}
+			className={`${doto.className} xs:mt-2 md:mt-0 sm:text-xl lg:text-2xl font-bold header-text header-route-link md:ml-auto`}
 		>
 			{!wallet ? "Select Wallet" : !connected ? "Connect" : "Disconnect"}
 		</button>

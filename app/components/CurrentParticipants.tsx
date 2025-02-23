@@ -28,7 +28,7 @@ const CurrentParticipants = () => {
         getParticipants();
 	}, [program]);
 	return (
-		<div className="landing-page-boarder flex-col p-5 mt-5 mx-auto w-full max-w-2xl page-text">
+		<div className="landing-page-boarder flex-col p-4 mt-5 mx-2 md:mx-auto max-w-2xl page-text">
 			<h2 className="primary-color text-center text-4xl mb-6">
 				This week&apos;s participants...
 			</h2>
