@@ -9,6 +9,9 @@ import idl from "../../../onchain/target/idl/solana_lottery.json";
 export async function GET() {
     console.log("Cron job started: Processing lottery payout...");
     try {
+        console.log("Anchor object:", Object.keys(anchor));
+        console.log("Wallet class:", anchor.Wallet);
+        
         if (!process.env.LOTTERY_AUTHORITY_KEYPAIR) {
             throw new Error('LOTTERY_KEYPAIR environment variable is required');
         }
