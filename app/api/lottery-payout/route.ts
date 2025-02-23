@@ -1,7 +1,7 @@
 // export const runtime = 'nodejs';
 
 import { NextResponse } from "next/server";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction, VersionedTransaction } from "@solana/web3.js";
 import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
 import idl from "../../../onchain/target/idl/solana_lottery.json";
 import * as anchor from "@coral-xyz/anchor";
@@ -21,7 +21,28 @@ export async function GET() {
         const authority = Keypair.fromSecretKey(
             new Uint8Array(JSON.parse(process.env.LOTTERY_AUTHORITY_KEYPAIR))
         );
-        const wallet = new anchor.Wallet(authority);
+        const wallet = {
+            payer: authority,
+            publicKey: authority.publicKey,
+            signTransaction: async <T extends Transaction | VersionedTransaction>(tx: T): Promise<T> => {
+                if (tx instanceof Transaction) {
+                    tx.partialSign(authority);
+                } else {
+                    tx.sign([authority]);
+                }
+                return tx;
+            },
+            signAllTransactions: async <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> => {
+                txs.forEach(tx => {
+                    if (tx instanceof Transaction) {
+                        tx.partialSign(authority);
+                    } else {
+                        tx.sign([authority]);
+                    }
+                });
+                return txs;
+            }
+        };
         const provider = new anchor.AnchorProvider(connection, wallet, { commitment: "confirmed" });
 
         console.log(`Authority: ${wallet.publicKey.toBase58()}`);
