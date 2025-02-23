@@ -5,6 +5,7 @@ import { Connection, Keypair, PublicKey, Transaction, VersionedTransaction } fro
 import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
 import idl from "../../../onchain/target/idl/solana_lottery.json";
 import * as anchor from "@coral-xyz/anchor";
+import { randomInt } from "crypto";
 
 export async function GET() {
     console.log("Cron job started: Processing lottery payout...");
@@ -58,11 +59,10 @@ export async function GET() {
 
         // Fetch lottery vault data
         let lotteryVault = await program.account.lotteryVault.fetch(lotteryVaultPda);
-        console.log("Lottery vault data:", lotteryVault.finishTime);
 
-        // Generate winning tickets
+        // Generate winning tickets using cryptographically secure random numbers
         const winningTickets = Array.from({ length: 3 }, () =>
-            Math.floor(Math.random() * lotteryVault.totalTicketsSold.toNumber())
+            randomInt(1, lotteryVault.totalTicketsSold.toNumber() + 1)
         );
         console.log("Generated winning tickets:", winningTickets);
 

@@ -152,6 +152,8 @@ pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
     lottery_vault.finish_time = lottery_vault.start_time + SECONDS_IN_A_WEEK;
     lottery_vault.status = LotteryStatus::InProgress;
 
+    msg!("Lottery payout completed and lottery restarted");
+
     Ok(())
 }
 
