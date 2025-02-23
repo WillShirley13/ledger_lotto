@@ -1,10 +1,13 @@
+export const runtime = 'nodejs';
+
+import * as anchor from "@coral-xyz/anchor";
 import { NextResponse } from "next/server";
-import { Program, AnchorProvider, Wallet, web3 } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey} from "@solana/web3.js";
 import type { SolanaLottery} from "../../../onchain/target/types/solana_lottery";
 import idl from "../../../onchain/target/idl/solana_lottery.json";
 
 export async function GET() {
+    console.log("Cron job started: Processing lottery payout...");
     try {
         if (!process.env.LOTTERY_AUTHORITY_KEYPAIR) {
             throw new Error('LOTTERY_KEYPAIR environment variable is required');
@@ -18,11 +21,13 @@ export async function GET() {
         const authority = Keypair.fromSecretKey(
             new Uint8Array(JSON.parse(process.env.LOTTERY_AUTHORITY_KEYPAIR))
         );
-        const wallet = new Wallet(authority);
-        const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
+        const wallet = new anchor.Wallet(authority);
+        const provider = new anchor.AnchorProvider(connection, wallet, { commitment: "confirmed" });
+
+        console.log(`Authority: ${wallet.publicKey.toBase58()}`);
 
         // Initialize program
-        const program = new Program<SolanaLottery>(idl as SolanaLottery, provider)
+        const program = new anchor.Program<SolanaLottery>(idl as SolanaLottery, provider)
 
         // Get lottery vault PDA
         const [lotteryVaultPda] = PublicKey.findProgramAddressSync(
@@ -37,6 +42,7 @@ export async function GET() {
         const winningTickets = Array.from({ length: 3 }, () =>
             Math.floor(Math.random() * lotteryVault.totalTicketsSold.toNumber())
         );
+        console.log("Generated winning tickets:", winningTickets);
 
         // Select winners
         const selectWinnersTx = await program.methods
@@ -48,11 +54,12 @@ export async function GET() {
             .rpc();
 
         await connection.confirmTransaction(selectWinnersTx);
+        console.log("Winners selected, transaction confirmed:", selectWinnersTx);
 
         // Fetch updated lottery vault data
         lotteryVault = await program.account.lotteryVault.fetch(lotteryVaultPda);
 
-        const protocolTreasury = new web3.PublicKey("ADPYX1FrWLgKwVQ1k2TndirR9nFJGRJWMifT8eoCxU9D");
+        const protocolTreasury = new anchor.web3.PublicKey("ADPYX1FrWLgKwVQ1k2TndirR9nFJGRJWMifT8eoCxU9D");
         // Process payout
         const payoutTx = await program.methods
             .lotteryPayout()
@@ -66,6 +73,7 @@ export async function GET() {
             .rpc();
 
         await connection.confirmTransaction(payoutTx);
+        console.log("Payout completed, transaction confirmed:", payoutTx);
 
         return NextResponse.json({ 
             success: true, 

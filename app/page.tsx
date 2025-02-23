@@ -3,7 +3,7 @@ import RecentWinners from "./components/RecentWinners";
 
 export default function Home() {
 	return <div className="flex flex-col page-text">
-        <div className="flex flex-col items-center justify-top min-h-screen mt-20">
+        <div className="flex flex-col flex-1 items-center justify-top min-h-screen mt-20">
             <h1 className="text-2xl md:text-3xl lg:text-5xl  md:mx-5 lg:mx-10 text-center">
                 Test your luck in <span className="primary-color">Solana&apos;s</span> very own onchain lottery
             </h1>
