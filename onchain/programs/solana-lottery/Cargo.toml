@@ -10,6 +10,7 @@ name = "solana_lottery"
 
 [features]
 default = []
+custom-heap = []
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []

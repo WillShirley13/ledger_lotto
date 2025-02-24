@@ -24,12 +24,15 @@ pub fn process_select_winners(ctx: Context<SelectWinners>, winning_numbers: [u8;
     let lottery_vault: &mut Account<'_, LotteryVault> = &mut ctx.accounts.lottery_vault;
     let participants: &Vec<PlayerInfo> = &lottery_vault.participants;
 
-    let winners: [Option<Pubkey>; 3] = winning_numbers.map(|num| {
-        participants
-            .iter()
-            .find(|p| p.ticket_numbers.contains(&num))
-            .map(|p| p.pubkey)
-    });
+    let mut winners: [Option<Pubkey>; 3] = [None, None, None];
+    for (i, num) in winning_numbers.iter().enumerate() {
+        for p in participants {
+            if p.ticket_numbers.contains(num) {
+                winners[i] = Some(p.pubkey);
+                break;
+            }
+        }
+    }
 
     lottery_vault.latest_loto_winners = RecentWinners {
         first_place: winners[0],
@@ -39,6 +42,7 @@ pub fn process_select_winners(ctx: Context<SelectWinners>, winning_numbers: [u8;
         third_place: winners[2],
         third_place_amount: None,
     };
+    msg!("Selected winners: {:?}", lottery_vault.latest_loto_winners);
     lottery_vault.status = LotteryStatus::Finished;
 
     Ok(())
@@ -84,9 +88,13 @@ pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
 
     // Calculate rewards
     let first_place_reward: u64 = (prize_pool * FIRST_PLACE_REWARD_BP) / BASIS_POINTS;
+    msg!("First place reward: {}", first_place_reward);
     let second_place_reward: u64 = (prize_pool * SECOND_PLACE_REWARD_BP) / BASIS_POINTS;
+    msg!("Second place reward: {}", second_place_reward);
     let third_place_reward: u64 = (prize_pool * THIRD_PLACE_REWARD_BP) / BASIS_POINTS;
+    msg!("Third place reward: {}", third_place_reward);
     let protocol_treasury_revenue: u64 = (prize_pool * PROTOCOL_REVENUE_SHARE_BP) / BASIS_POINTS;
+    msg!("Protocol treasury revenue: {}", protocol_treasury_revenue);
 
     // Ensure prize pool matches the sum of rewards and protocol revenue
     require!(
@@ -97,7 +105,11 @@ pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
 
     // First place winner payout
     if let Some(winner) = &first_winner {
-        transfer_lamports(&lottery_vault.to_account_info(), winner, first_place_reward)?;
+        transfer_lamports(
+            &lottery_vault.to_account_info(),
+            &winner.to_account_info(),
+            first_place_reward,
+        )?;
         // Update prize pool
         lottery_vault.prize_pool -= first_place_reward;
         lottery_vault.latest_loto_winners.first_place_amount = Some(first_place_reward);
@@ -111,7 +123,7 @@ pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
     if let Some(winner) = &second_winner {
         transfer_lamports(
             &lottery_vault.to_account_info(),
-            winner,
+            &winner.to_account_info(),
             second_place_reward,
         )?;
         // Update prize pool
@@ -125,7 +137,11 @@ pub fn process_lottery_payout(ctx: Context<LotteryPayout>) -> Result<()> {
 
     // Third place winner payout
     if let Some(winner) = &third_winner {
-        transfer_lamports(&lottery_vault.to_account_info(), winner, third_place_reward)?;
+        transfer_lamports(
+            &lottery_vault.to_account_info(),
+            &winner.to_account_info(),
+            third_place_reward,
+        )?;
         // Update prize pool
         lottery_vault.prize_pool -= third_place_reward;
         lottery_vault.latest_loto_winners.third_place_amount = Some(third_place_reward);

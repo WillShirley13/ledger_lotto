@@ -82,6 +82,7 @@ export async function GET() {
         lotteryVault = await program.account.lotteryVault.fetch(lotteryVaultPda);
 
         const protocolTreasury = new anchor.web3.PublicKey("ADPYX1FrWLgKwVQ1k2TndirR9nFJGRJWMifT8eoCxU9D");
+        console.log(`Lottery winners: ${JSON.stringify(lotteryVault.latestLotoWinners)}`);
         // Process payout
         const payoutTx = await program.methods
             .lotteryPayout()
