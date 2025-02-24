@@ -75,7 +75,12 @@ export async function GET() {
             .signers([authority])
             .rpc();
 
-        await connection.confirmTransaction(selectWinnersTx);
+        const latestBlockHash = await connection.getLatestBlockhash();
+        await connection.confirmTransaction({
+            signature: selectWinnersTx,
+            blockhash: latestBlockHash.blockhash,
+            lastValidBlockHeight: latestBlockHash.lastValidBlockHeight
+        });
         console.log("Winners selected, transaction confirmed:", selectWinnersTx);
 
         // Fetch updated lottery vault data
@@ -95,7 +100,11 @@ export async function GET() {
             })
             .rpc();
 
-        await connection.confirmTransaction(payoutTx);
+        await connection.confirmTransaction({
+            signature: payoutTx,
+            blockhash: latestBlockHash.blockhash,
+            lastValidBlockHeight: latestBlockHash.lastValidBlockHeight
+        });
         console.log("Payout completed, transaction confirmed:", payoutTx);
 
         return NextResponse.json({ 
