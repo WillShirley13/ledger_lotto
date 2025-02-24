@@ -24,22 +24,30 @@ pub fn process_select_winners(ctx: Context<SelectWinners>, winning_numbers: [u8;
     let lottery_vault: &mut Account<'_, LotteryVault> = &mut ctx.accounts.lottery_vault;
     let participants: &Vec<PlayerInfo> = &lottery_vault.participants;
 
-    let mut winners: [Option<Pubkey>; 3] = [None, None, None];
-    for (i, num) in winning_numbers.iter().enumerate() {
-        for p in participants {
-            if p.ticket_numbers.contains(num) {
-                winners[i] = Some(p.pubkey);
-                break;
-            }
+    let [first_winning_number, second_winning_number, third_winning_number] = winning_numbers;
+    let mut first_pubkey: Option<Pubkey> = None;
+    let mut second_pubkey: Option<Pubkey> = None;
+    let mut third_pubkey: Option<Pubkey> = None;
+
+    for participant in participants {
+        if participant.ticket_numbers.contains(&first_winning_number) {
+            first_pubkey = Some(participant.pubkey);
+        }
+        if participant.ticket_numbers.contains(&second_winning_number) {
+            second_pubkey = Some(participant.pubkey);
+        }
+        if participant.ticket_numbers.contains(&third_winning_number) {
+            third_pubkey = Some(participant.pubkey);
         }
     }
 
+    //NOTE: IF NO WINNER IS FOUND FOR A PARTICULAR PLACE, THE LEFT OVER WINNINGS WILL BE ROLLED OVER TO THE NEXT LOTTERY
     lottery_vault.latest_loto_winners = RecentWinners {
-        first_place: winners[0],
+        first_place: first_pubkey,
         first_place_amount: None,
-        second_place: winners[1],
+        second_place: second_pubkey,
         second_place_amount: None,
-        third_place: winners[2],
+        third_place: third_pubkey,
         third_place_amount: None,
     };
     msg!("Selected winners: {:?}", lottery_vault.latest_loto_winners);
