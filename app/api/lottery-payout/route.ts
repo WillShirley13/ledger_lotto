@@ -60,11 +60,15 @@ export async function GET() {
         // Fetch lottery vault data
         let lotteryVault = await program.account.lotteryVault.fetch(lotteryVaultPda);
 
-        // Generate winning tickets using cryptographically secure random numbers
-        const winningTickets = Array.from({ length: 3 }, () =>
-            randomInt(1, lotteryVault.totalTicketsSold.toNumber() + 1)
-        );
-        console.log("Generated winning tickets:", winningTickets);
+        // Generate unique winning tickets using cryptographically secure random numbers
+        const winningTicketsSet = new Set<number>();
+        while (winningTicketsSet.size < 3) {
+            winningTicketsSet.add(
+                randomInt(1, lotteryVault.totalTicketsSold.toNumber() + 1)
+            );
+        }
+        const winningTickets = Array.from(winningTicketsSet);
+        console.log("Generated unique winning tickets:", winningTickets);
 
         // Select winners
         const selectWinnersTx = await program.methods
@@ -80,7 +84,7 @@ export async function GET() {
             signature: selectWinnersTx,
             blockhash: latestBlockHash.blockhash,
             lastValidBlockHeight: latestBlockHash.lastValidBlockHeight
-        });
+        }, "finalized");
         console.log("Winners selected, transaction confirmed:", selectWinnersTx);
 
         // Fetch updated lottery vault data
@@ -104,7 +108,7 @@ export async function GET() {
             signature: payoutTx,
             blockhash: latestBlockHash.blockhash,
             lastValidBlockHeight: latestBlockHash.lastValidBlockHeight
-        });
+        }, "finalized");
         console.log("Payout completed, transaction confirmed:", payoutTx);
 
         return NextResponse.json({ 
