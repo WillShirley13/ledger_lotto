@@ -77,8 +77,8 @@ anchor deploy --provider.cluster devnet
 
 Create a `.env.local` file with the following variables:
 
-SOLANA_RPC_URL=https://api.devnet.solana.com
-LOTTERY_AUTHORITY_KEYPAIR=<Your Authority Keypair JSON>
+- SOLANA_RPC_URL=https://api.devnet.solana.com
+- LOTTERY_AUTHORITY_KEYPAIR=<Your Authority Keypair JSON>
 
 
 ## Usage
