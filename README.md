@@ -103,6 +103,7 @@ Create a `.env.local` file with the following variables:
   - `/api` - API routes (includes lottery payout endpoint)
   - `/components` - React components
   - `/tickets` - Ticket purchasing page
+  - `/faq` - Frequently asked questions page
 - `/onchain` - Solana program code
   - `/programs/solana-lottery` - Anchor program
   - `/app` - Program account definitions
